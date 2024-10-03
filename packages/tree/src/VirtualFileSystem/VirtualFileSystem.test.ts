@@ -1,45 +1,4 @@
-import { FileTree, VirtualFileSystem } from "./index";
-
-describe("FileTree", () => {
-  test("root has no children", () => {
-    const root = new FileTree(null, "root");
-    expect(root.label).toBe("root");
-    expect(root.parent).toBe(null);
-  });
-
-  test("root has children", () => {
-    const root = new FileTree(null, "root");
-    const child_A = new FileTree(root, "child_A");
-    const child_B = new FileTree(root, "child_B");
-
-    expect(root.children.length).toBe(2);
-
-    expect(child_A.parent).toBe(root);
-    expect(child_A.label).toBe("child_A");
-
-    expect(child_B.parent).toBe(root);
-    expect(child_B.label).toBe("child_B");
-  });
-
-  test("print children to one level", () => {
-    const root = new FileTree(null, "root");
-    new FileTree(root, "child_A");
-    new FileTree(root, "child_B");
-
-    expect(root.listChildren()).toEqual(["child_A", "child_B"]);
-  });
-
-  test("print children to two levels", () => {
-    const root = new FileTree(null, "root");
-    const child_A = new FileTree(root, "child_A");
-    new FileTree(root, "child_B");
-    new FileTree(child_A, "child_A_A");
-    new FileTree(child_A, "child_A_B");
-
-    expect(root.listChildren()).toEqual(["child_A", "child_B"]);
-    expect(child_A.listChildren()).toEqual(["child_A_A", "child_A_B"]);
-  });
-});
+import { VirtualFileSystem } from "./VirtualFileSystem";
 
 describe("VirtualFileSystem", () => {
   test("when initialized, creates a root file tree", () => {
@@ -149,6 +108,22 @@ describe("VirtualFileSystem", () => {
 
         expect(fs.currentDirectory.label).toBe("child_B");
       });
+
+      test('thows an error when trying to cd with too many ".."', () => {
+        const fs = new VirtualFileSystem();
+        fs.mkdir("child_A");
+        fs.mkdir("child_B");
+
+        expect(fs.currentDirectory.label).toBe("root");
+
+        fs.cd("child_A");
+
+        expect(fs.currentDirectory.label).toBe("child_A");
+
+        expect(() => fs.cd("../../")).toThrow(
+          "Cannot change directory to: '../../'.  It is too many levels up.",
+        );
+      });
     });
 
     test('cd with "../child_A/child_A_A" from "child_B" changes to child_A_A directory', () => {
@@ -181,20 +156,23 @@ describe("VirtualFileSystem", () => {
       expect(fs.currentDirectory.label).toBe("child_A_A");
     });
 
-    xtest('cd with "~" changes to root directory', () => {
+    test("cd to a non-existent directory throws an error", () => {
       const fs = new VirtualFileSystem();
       fs.mkdir("child_A");
       fs.mkdir("child_B");
 
-      expect(fs.currentDirectory.label).toBe("root");
+      expect(() => fs.cd("child_C")).toThrow(
+        "Cannot change directory to: 'child_C' The directory does not exist.",
+      );
+    });
 
-      fs.cd("child_A");
+    test("cd to a file throws an error", () => {
+      const fs = new VirtualFileSystem();
+      fs.touch("file_A");
 
-      expect(fs.currentDirectory.label).toBe("child_A");
-
-      fs.cd("~");
-
-      expect(fs.currentDirectory.label).toBe("root");
+      expect(() => fs.cd("file_A")).toThrow(
+        "Cannot change directory to: 'file_A'.  It is a file.",
+      );
     });
   });
 
@@ -236,6 +214,110 @@ describe("VirtualFileSystem", () => {
       fs.cd("child_A_A");
 
       expect(fs.pwd()).toBe("/child_A/child_A_A");
+    });
+  });
+
+  describe("mkdir", () => {
+    test("mkdir creates a new directory in the current directory", () => {
+      const fs = new VirtualFileSystem();
+      fs.mkdir("child_A");
+      fs.mkdir("child_B");
+
+      expect(fs.ls()).toEqual(["child_A", "child_B"]);
+
+      fs.cd("child_A");
+
+      expect(fs.currentDirectory.isFile).toBe(false);
+    });
+  });
+
+  describe("touch", () => {
+    test("touch creates a new file in the current directory", () => {
+      const fs = new VirtualFileSystem();
+      fs.touch("file_A");
+      fs.touch("file_B");
+
+      expect(fs.ls()).toEqual(["file_A", "file_B"]);
+      expect(() => fs.cd("file_A")).toThrow(
+        "Cannot change directory to: 'file_A'.  It is a file.",
+      );
+    });
+  });
+
+  describe("rm", () => {
+    test("rm removes a file from the current directory", () => {
+      const fs = new VirtualFileSystem();
+      fs.touch("file_A");
+      fs.touch("file_B");
+
+      expect(fs.ls()).toEqual(["file_A", "file_B"]);
+
+      fs.rm("file_A");
+
+      expect(fs.ls()).toEqual(["file_B"]);
+
+      fs.rm("file_B");
+
+      expect(fs.ls()).toEqual([]);
+    });
+
+    test("rm throws an error if recursive is not true when calling rm on a directory", () => {
+      const fs = new VirtualFileSystem();
+      fs.mkdir("child_A");
+      fs.mkdir("child_B");
+
+      expect(fs.ls()).toEqual(["child_A", "child_B"]);
+      expect(() => fs.rm("child_A")).toThrow("rm: 'child_A' is a directory.");
+    });
+
+    test("rm removes a directory when recursive and force is true", () => {
+      const fs = new VirtualFileSystem();
+      fs.mkdir("child_A");
+      fs.mkdir("child_B");
+
+      expect(fs.ls()).toEqual(["child_A", "child_B"]);
+
+      fs.rm("child_A", true);
+
+      expect(fs.ls()).toEqual(["child_B"]);
+    });
+
+    test("rm throws an error when trying to remove a non-existent file", () => {
+      const fs = new VirtualFileSystem();
+      fs.touch("file_A");
+      fs.touch("file_B");
+
+      expect(() => fs.rm("file_C")).toThrow(
+        "Cannot remove: 'file_C'.  It does not exist.",
+      );
+    });
+
+    test("rm removes nested directories when recursive is true", () => {
+      const fs = new VirtualFileSystem();
+      fs.mkdir("child_A");
+      fs.cd("child_A");
+      fs.mkdir("child_A_A");
+      fs.cd("child_A_A");
+      fs.mkdir("child_A_A_A");
+
+      expect(fs.ls()).toEqual(["child_A_A_A"]);
+
+      fs.cd("../../");
+
+      expect(fs.ls()).toEqual(["child_A"]);
+
+      fs.rm("child_A/child_A_A/child_A_A_A", true);
+
+      expect(fs.currentDirectory.label).toBe("root");
+      expect(fs.ls()).toEqual(["child_A"]);
+
+      fs.cd("child_A");
+
+      expect(fs.ls()).toEqual(["child_A_A"]);
+
+      fs.cd("child_A_A");
+
+      expect(fs.ls()).toEqual([]);
     });
   });
 });
