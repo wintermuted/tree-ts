@@ -1,4 +1,4 @@
-declare module '@vfs/tree' {
+declare module "@vfs/tree" {
   export class FileTree {
     constructor(parent: FileTree | null, name: string);
   }
@@ -8,8 +8,7 @@ declare module '@vfs/tree' {
   }
 }
 
-declare interface TreeNodeInterface 
-{ 
-  parent: TreeNodeInterface | null; 
-  children: TreeNodeInterface[]; 
+declare interface TreeNodeInterface {
+  parent: TreeNodeInterface | null;
+  children: TreeNodeInterface[];
 }

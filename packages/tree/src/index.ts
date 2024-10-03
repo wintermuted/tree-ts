@@ -1,28 +1,28 @@
-export interface TreeNodeInterface 
-{ 
-  parent: TreeNodeInterface | null; 
+export interface TreeNodeInterface {
+  parent: TreeNodeInterface | null;
   children: TreeNodeInterface[];
   label: string;
   isFile?: boolean;
 }
 
-export class TreeNode implements TreeNodeInterface 
-{ 
-  public parent: TreeNodeInterface | null; 
+export class TreeNode implements TreeNodeInterface {
+  public parent: TreeNodeInterface | null;
   public children: TreeNodeInterface[] = [];
   public label: string = "";
   public isFile: boolean = false;
 
-  constructor(parent: TreeNodeInterface | null)  
-  { 
-    this.parent = parent; 
-    if (this.parent) this.parent.children.push(this); 
-  } 
+  constructor(parent: TreeNodeInterface | null) {
+    this.parent = parent;
+    if (this.parent) this.parent.children.push(this);
+  }
 }
 
 export class FileTree extends TreeNode {
-
-  constructor(parent: TreeNodeInterface["parent"], label: string, isFile: boolean = false) {
+  constructor(
+    parent: TreeNodeInterface["parent"],
+    label: string,
+    isFile: boolean = false,
+  ) {
     super(parent);
     this.label = label;
     this.isFile = isFile;
@@ -41,7 +41,7 @@ export class VirtualFileSystem {
 
   // Initialize the file system with a root directory
   constructor() {
-    this.root = new FileTree(null, 'root');
+    this.root = new FileTree(null, "root");
     this.currentDirectory = this.root;
   }
 
@@ -112,7 +112,7 @@ export class VirtualFileSystem {
       }
 
       // Go down the number of levels specified
-      if (levelsUp < levels.length) { 
+      if (levelsUp < levels.length) {
         const levelsDown = levels.slice(levelsUp);
         levelsDown.forEach((level) => {
           const childNode = tempCurrentDirectory.children.find((child) => {
