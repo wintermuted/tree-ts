@@ -1,0 +1,26 @@
+{
+  "name": "@vfs/tree",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "clean": "rm -rf dist && rm -rf node_modules",
+    "watch": "tsc src/index.ts --outDir dist --declaration --watch",
+    "build": "tsc src/index.ts --outDir dist --declaration",
+    "lint": "eslint src/**/*.ts",
+    "prettify": "prettier --write src/**/*.ts",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/preset-env": "^7.25.4",
+    "@babel/preset-typescript": "^7.24.7",
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.13",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5"
+  }
+}
