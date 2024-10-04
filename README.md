@@ -1,5 +1,7 @@
 # @vfs/vfs
 
+[![Node.js CI](https://github.com/wintermuted/tree-ts/actions/workflows/node.js.yml/badge.svg)](https://github.com/wintermuted/tree-ts/actions/workflows/node.js.yml)
+
 ## Introduction
 
 - This repository uses TypeScript and NPM Workspaces to provide the basic programming environment.  
